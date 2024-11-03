@@ -105,20 +105,23 @@ namespace GC{
           auto boundary_cell_handles = phi.mesh->boundary2opposite_handles.host_ptr();
 
           // Define dimensions
-          NcDim numElementsDim = dataFile.addDim("num_elements", size);
-          NcDim numBoundariesDim = dataFile.addDim("num_boundaries", boundary_size);
-          NcDim tripletDim = dataFile.addDim("triplet_components", 3); // For three int values
+          NcDim numElementsDim = dataFile.addDim("num_cells", size);
 
-
+          // Cell index
+          std::vector<unsigned int> cell_indices;
+          for (unsigned int i = 0; i < size; ++i){
+            cell_indices.push_back(i);
+          }
           // Define variables based on data type
           NcVar elementIdsVar = dataFile.addVar("cell_ids", ncUint, numElementsDim);
+          elementIdsVar.putVar(cell_indices.data());
           if constexpr (std::is_same<T, Scalar>::value) {
               // Scalar data
               NcVar elementValuesVar = dataFile.addVar("cell_values", ncDouble, numElementsDim);
               elementValuesVar.putVar(data_array);
           } else if constexpr (std::is_same<T, Vector2>::value) {
               // Vector2 data
-              NcDim componentDim = dataFile.addDim("components", 2);
+              NcDim componentDim = dataFile.addDim("xy_dim", 2);
               NcVar elementValuesVar = dataFile.addVar("cell_values", ncDouble, {numElementsDim, componentDim});
 
               // Create a 2D array to store the (x, y) components
@@ -143,6 +146,8 @@ namespace GC{
               boundary_type.insert({cell_id, boundary_array[i]});
           }
 
+          NcDim numBoundariesDim = dataFile.addDim("num_boundaries", boundary_type.size());
+          NcDim tripletDim = dataFile.addDim("code_dim", 3); // For three int values
           // Create arrays for boundary data
           std::vector<unsigned int> boundaryElementIds;
           std::vector<std::vector<int>> boundaryTypes(boundary_type.size(), std::vector<int>(3));

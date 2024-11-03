@@ -269,7 +269,8 @@ def _setup_boundary_data_table(boundary_list, outline_boundary='open'):
     else:
         raise ValueError("outline_boundary must be fall, open or rigid!")
     data_table = pd.concat([data_table, new_row], ignore_index=True)
-    data_table.name[0] = 'Outline boundary'
+    # data_table.name[0] = 'Outline boundary'
+    data_table.at[0, 'name'] = 'Outline boundary'
     # convert boundary_list to a dataframe
     if boundary_list is None:
         boundary_list = []
@@ -293,26 +294,33 @@ def _setup_boundary_data_table(boundary_list, outline_boundary='open'):
             bound_type = 'open' # defaul type is open
 
         if 'h' in one_bound.keys():
-            data_table.hSources[bound_ind] = np.array(one_bound['h'])
+            #data_table.hSources[bound_ind] = np.array(one_bound['h'])
+            data_table.at[bound_ind, 'hSources'] = np.array(one_bound['h'])
             bound_type = 'open'
         else:
-            data_table.hSources[bound_ind] = None
+            #data_table.hSources[bound_ind] = None
+            data_table.at[bound_ind, 'hSources'] = None
         
         if 'hU' in one_bound.keys():
-            data_table.hUSources[bound_ind] = np.array(one_bound['hU'])
+            #data_table.hUSources[bound_ind] = np.array(one_bound['hU'])
+            data_table.at[bound_ind, 'hUSources'] = np.array(one_bound['hU'])
             bound_type = 'open'
         else:
-            data_table.hUSources[bound_ind] = None
+            #data_table.hUSources[bound_ind] = None
+            data_table.at[bound_ind, 'hUSources'] = None
 
         if 'C' in one_bound.keys():
-            data_table.CSources[bound_ind] = np.array(one_bound['C'])
+            #data_table.CSources[bound_ind] = np.array(one_bound['C'])
+            data_table.at[bound_ind, 'CSources'] = np.array(one_bound['C'])
             bound_type = 'open'
         else:
-            data_table.CSources[bound_ind] = None
+            #data_table.CSources[bound_ind] = None
+            data_table.at[bound_ind, 'CSources'] = None
         
-        data_table.type[bound_ind] = bound_type
+        data_table.at[bound_ind, 'type'] = bound_type
         if 'name' in one_bound.keys():
-            data_table.name[bound_ind] = one_bound['name']
+            #data_table.name[bound_ind] = one_bound['name']
+            data_table.at[bound_ind, 'name'] = None
 
     return data_table
 
@@ -333,20 +341,26 @@ def _get_boundary_code(boudnary_data_table):
     m_hu = 0
     m_c = 0
     for n_seq in range(num_of_bound):
-        
-        data_table.h_code[n_seq] = np.array([[2, 0, 0]])
-        data_table.C_code[n_seq] = np.array([[2, 0, 0]])
+        print(n_seq)
+        #data_table.h_code[n_seq] = np.array([[2, 0, 0]])
+        data_table.at[n_seq,'h_code'] = np.array([[2, 0, 0]])
+        #data_table.C_code[n_seq] = np.array([[2, 0, 0]])
+        data_table.at[n_seq,'C_code'] = np.array([[2, 0, 0]])
         bound_type = data_table.type[n_seq]
         if bound_type == 'rigid':
-            data_table.hU_code[n_seq] = np.array([[2, 2, 0]])
+            #data_table.hU_code[n_seq] = np.array([[2, 2, 0]])
+            data_table.at[n_seq,'hU_code'] = np.array([[2, 2, 0]])
             description1 = bound_type
         elif bound_type == 'fall':
             h_sources = np.array([[0, 0], [1, 0]])
             hU_sources = np.array([[0, 0, 0], [1, 0, 0]])
-            c_sources = np.array([[0, 0], [1, 0]])
-            data_table.h_code[n_seq] = np.array([[3, 0, m_h]])
-            data_table.hU_code[n_seq] = np.array([[3, 0, m_hu]])
-            data_table.C_code[n_seq] = np.array([[3, 0, m_c]])
+            C_sources = np.array([[0, 0], [1, 0]])
+            #data_table.h_code[n_seq] = np.array([[3, 0, m_h]])
+            data_table.at[n_seq,'h_code'] = np.array([[3, 0, m_h]])
+            #data_table.hU_code[n_seq] = np.array([[3, 0, m_hu]])
+            data_table.at[n_seq,'hU_code'] = np.array([[3, 0, m_hu]])
+            #data_table.C_code[n_seq] = np.array([[3, 0, m_c]])
+            data_table.at[n_seq,'C_code'] = np.array([[3, 0, m_c]])
             m_h = m_h+1
             m_hu = m_hu+1
             m_c = m_c+1
@@ -355,18 +369,21 @@ def _get_boundary_code(boudnary_data_table):
             h_sources = data_table.hSources[n_seq]
             hU_sources = data_table.hUSources[n_seq]
             C_sources = data_table.CSources[n_seq]
-            data_table.hU_code[n_seq] = np.array([[2, 1, 0]])
+            data_table.at[n_seq, 'hU_code'] = np.array([[2, 1, 0]])
             description1 = bound_type
             if h_sources is not None:
-                data_table.h_code[n_seq] = np.array([[3, 0, m_h]]) #[3 0 m]
+                #data_table.h_code[n_seq] = np.array([[3, 0, m_h]]) #[3 0 m]
+                data_table.at[n_seq,'h_code'] = np.array([[3, 0, m_h]])
                 description1 = description1+', h given'
                 m_h = m_h+1
             if hU_sources is not None:
-                data_table.hU_code[n_seq] = np.array([[3, 0, m_hu]]) #[3 0 m]
+                #data_table.hU_code[n_seq] = np.array([[3, 0, m_hu]]) #[3 0 m]
+                data_table.at[n_seq,'hU_code'] = np.array([[3, 0, m_hu]])
                 description1 = description1+', hU given'
                 m_hu = m_hu+1
             if C_sources is not None:
-                data_table.C_code[n_seq] = np.array([[3, 0, m_c]]) #[3 0 m]
+                #data_table.C_code[n_seq] = np.array([[3, 0, m_c]]) #[3 0 m]
+                data_table.at[n_seq,'C_code'] = np.array([[3, 0, m_c]])
                 description1 = description1+', C given'
                 m_c = m_c+1
         description.append(description1)

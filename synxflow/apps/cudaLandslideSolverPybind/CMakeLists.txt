@@ -29,12 +29,11 @@ add_dependencies(${LIB} lib cuda_lib)
 
 #set (CUDA_NVCC_FLAGS "-arch=sm_35")
 
-target_link_libraries(${LIB} lib cuda_lib)
+target_link_libraries(${LIB} netcdf netcdf-cxx4 lib cuda_lib)
 
 add_library(${EXE} MODULE ${SRCS})
 
 target_link_libraries(${EXE} ${LIB})
-target_link_libraries(${EXE} netcdf-cxx4)
 target_link_libraries(${EXE} pybind11::module)
 
 set_target_properties(${EXE} PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}"

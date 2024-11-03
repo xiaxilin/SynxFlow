@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Created on Thu Apr 23 11:45:24 2020
-# Author: Xiaodong Ming
+# Created on Thu Apr 23 11:45:24 2020, updated on Nov 13, 2024
+# Author: Xiaodong Ming, Xilin Xia
 
 """
 Independent functions

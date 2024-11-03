@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Author: Xiaodong Ming
+# Author: Xiaodong Ming, Xilin Xia
 
 """
 InputModel
@@ -45,6 +45,7 @@ import shutil
 import copy
 import warnings
 import numpy as np
+import glob
 from datetime import datetime
 from netCDF4 import Dataset
 from .Raster import Raster
@@ -653,6 +654,69 @@ class InputModel:
             print(str(curvature_on).lower(), file=file)
             print("[Filter mass flux or not]", file=file)
             print(str(filter_mass_flux).lower(), file=file)
+
+    def write_debris_config(self, rhoW=1000, rhoS=2650, particleD=0.00308, phi=0.4, criticalSlope=1.0, alpha=1.0, beta=0.01):
+        """
+        Writes given parameters to a parameters.dat file in the specified case folder.
+        
+        Parameters:
+        - case_folder (str): Path to the case folder where the parameters file will be written.
+        - rhoW (float): Water density in kg/m3. Default is 1000.
+        - rhoS (float): Solids density in kg/m3. Default is 2650.
+        - particleD (float): Particle diameter in m. Default is 0.00308.
+        - phi (float): Porosity. Default is 0.4.
+        - criticalSlope (float): Critical slope. Default is 1.0.
+        - alpha (float): Alpha parameter. Default is 1.0.
+        - beta (float): Beta parameter. Default is 0.01.
+        """
+        directory = os.path.join(self._case_folder, 'input')
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        filename = os.path.join(directory,'parameters.dat')
+        
+        with open(filename, 'w') as f:
+            f.write(f"{rhoW} {rhoS} {particleD} {phi} {criticalSlope} {alpha} {beta}")
+
+    def load_backup(self, time):
+        """
+        Prepare running simulations from backup time points, after calling this function, the simulation can start from that point by calling run
+
+        Parameters:
+        - time (float): Time since when the simulation can start again.
+        """
+        # Construct the search pattern for the given time
+        time_str = str(time)
+        out_folder = os.path.join(self._case_folder, 'output')
+        search_pattern = os.path.join(out_folder,  f"*backup__{time_str}.nc")
+        
+        # Find all matching files
+        matching_files = glob.glob(search_pattern)
+        
+        if not matching_files:
+            print(f"No files found with pattern *backup__{time_str}.nc in {out_folder}")
+            return
+        
+        in_folder = os.path.join(self._case_folder, 'input', 'field')
+        # Ensure the input folder exists
+        if not os.path.exists(in_folder):
+            print("Input folder did not exist, make sure generating them first")
+            os.makedirs(in_folder)
+        
+        # Copy each matching file to the input folder
+        for file_path in matching_files:
+            try:
+                file_name = os.path.basename(file_path)
+                new_file_name = file_name.split("_backup__")[0] + ".nc"
+                new_file_path = os.path.join(in_folder, new_file_name)
+                
+                shutil.copy(file_path, new_file_path)
+                print(f"Copied {file_path} to {new_file_path}")
+            except Exception as e:
+                print(f"Error copying {file_path}: {e}")
+
+        new_runtime = np.array([time] + self.times[1:].tolist())
+        self.write_runtime_file(new_runtime)
+
 
     def save_object(self, file_name):
         """ Save object as a pickle file

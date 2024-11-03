@@ -103,6 +103,7 @@ namespace GC{
                   int source_id = boundary_values[i * 3 + 2];
                   boundary_type.insert({ boundary_ids[i], ShortTripleFlag(primary_type, secondary_type, source_id) });
               }
+
           }
 
           std::cout << "Data successfully read from file:" << filename << std::endl;
