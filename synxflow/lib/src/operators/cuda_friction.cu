@@ -389,7 +389,7 @@ namespace GC{
           Scalar vel = norm(U_);
           //-------- Increasing manning ----------
           Scalar manning_cri = manning_;
-          if (vel > 15.0){
+          if (vel > 5.0){
             manning_cri = sqrt(1.0/((1e-10+dt)*g_*pow(h_, -4.0 / 3.0)*vel));
           }
           manning_ = fmax(manning_cri, manning_); 

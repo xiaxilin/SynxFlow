@@ -25,9 +25,15 @@ message("lib is already defined")
 
 else()
 
+message(STATUS "netCDF path: ${netCDF_INCLUDE_DIR}")
+
 include_directories(${GC_INCLUDE_DIRS})
+include_directories(${netCDF_INCLUDE_DIR})
+link_directories(${netCDF_LIB_DIR})
 add_library(lib STATIC ${gc_srcs})
+target_link_libraries(lib netcdf-cxx4 netcdf)
 #cuda_add_library(cuda_lib STATIC ${gc_cuda_srcs})
 cuda_add_library(cuda_lib  STATIC ${gc_cuda_srcs})
+link_libraries(cuda_lib netcdf-cxx4 netcdf)
 
 endif()

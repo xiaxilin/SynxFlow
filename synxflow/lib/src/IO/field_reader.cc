@@ -22,11 +22,96 @@
 #include <sstream>
 #include <iostream>
 #include <string>
+#include <netcdf>
+
+using namespace netCDF;
+using namespace netCDF::exceptions;
+
 
 namespace GC{
 
   fieldReader::fieldReader(const char* filename){
     readin_field(filename);
+  }
+
+  void fieldReader::readin_field_netcdf(const char* filename) {
+      try {
+          // Open the NetCDF file
+          NcFile ncFile(filename, NcFile::read);
+
+          // Reading number of elements
+          size_t num_elements = ncFile.getDim("num_cells").getSize();
+
+          // Read cell IDs and cell values
+          NcVar cell_ids_var = ncFile.getVar("cell_ids");
+          NcVar cell_values_var = ncFile.getVar("cell_values");
+
+          if (cell_ids_var.isNull() || cell_values_var.isNull()) {
+              std::cout << "Error: Required variables not found in the NetCDF file." << std::endl;
+              return;
+          }
+
+          // Read data from variables
+          std::vector<int> cell_ids(num_elements);
+          cell_ids_var.getVar(cell_ids.data());
+
+          // Determine the number of columns in the cell values
+          NcDim xy_dim = ncFile.getDim("xy_dim");
+          size_t num_columns = xy_dim.isNull() ? 1 : xy_dim.getSize();
+
+          // Read cell values data
+          std::vector<double> cell_values(num_elements * num_columns);
+          cell_values_var.getVar(cell_values.data());
+
+          // Convert and insert data into the map
+          for (size_t i = 0; i < num_elements; i++) {
+              Vector3 value;
+              if (num_columns == 1) {
+                  value = Vector3(cell_values[i], 0.0, 0.0);  // Single value, set (x, 0, 0)
+              } else if (num_columns == 2) {
+                  value = Vector3(cell_values[i * 2], cell_values[i * 2 + 1], 0.0);  // Two values, set (x, y, 0)
+              } else {
+                  std::cout << "Unexpected number of columns in cell values: " << num_columns << std::endl;
+                  return;
+              }
+
+              data.insert({ cell_ids[i], value });
+          }
+
+          // Check and read boundary data if it exists
+          if (!ncFile.getDim("num_boundaries").isNull()) {
+              size_t num_boundaries = ncFile.getDim("num_boundaries").getSize();
+              NcVar boundary_ids_var = ncFile.getVar("boundary_ids");
+              NcVar boundary_values_var = ncFile.getVar("boundary_values");
+
+              if (boundary_ids_var.isNull() || boundary_values_var.isNull()) {
+                  std::cout << "Error: Required boundary variables not found in the NetCDF file." << std::endl;
+                  return;
+              }
+
+              // Read boundary data into vectors
+              std::vector<int> boundary_ids(num_boundaries);
+              std::vector<int> boundary_values(num_boundaries * 3);  // Assuming 3 columns for boundary data
+
+              boundary_ids_var.getVar(boundary_ids.data());
+              boundary_values_var.getVar(boundary_values.data());
+
+              // Insert boundary data into the map
+              for (size_t i = 0; i < num_boundaries; i++) {
+                  int primary_type = boundary_values[i * 3];
+                  int secondary_type = boundary_values[i * 3 + 1];
+                  int source_id = boundary_values[i * 3 + 2];
+                  boundary_type.insert({ boundary_ids[i], ShortTripleFlag(primary_type, secondary_type, source_id) });
+              }
+          }
+
+          std::cout << "Data successfully read from file:" << filename << std::endl;
+
+      } catch (NcException& e) {
+          std::cerr << "NetCDF error: " << e.what() << std::endl;
+      } catch (std::exception& e) {
+          std::cerr << "Standard exception: " << e.what() << std::endl;
+      }
   }
 
   void fieldReader::readin_field(const char* filename){
@@ -82,6 +167,53 @@ namespace GC{
     }
   }
 
+  bool completeFieldReader::readin_region_mask_netcdf(const char* filename) {
+
+      try {
+          // Open the NetCDF file
+          NcFile ncFile(filename, NcFile::read);
+
+          // Read the number of elements from the dimension
+          NcDim num_elements_dim = ncFile.getDim("num_cells");
+          if (num_elements_dim.isNull()) {
+              std::cerr << "Error: Dimension 'num_cells' not found in NetCDF file." << std::endl;
+              return false;
+          }
+
+          size_t n_elements = num_elements_dim.getSize();
+
+          // Read the IDs and values
+          NcVar element_ids_var = ncFile.getVar("cell_ids");
+          NcVar element_values_var = ncFile.getVar("cell_values");
+
+          if (element_ids_var.isNull() || element_values_var.isNull()) {
+              std::cerr << "Error: Variables 'cell_ids' or 'cell_values' not found in NetCDF file." << std::endl;
+              return false;
+          }
+
+          // Read data into vectors
+          std::vector<Flag> element_ids(n_elements);
+          std::vector<Flag> element_values(n_elements);
+
+          element_ids_var.getVar(element_ids.data());
+          element_values_var.getVar(element_values.data());
+
+          // Insert data into the region_mask map
+          for (size_t i = 0; i < n_elements; i++) {
+              region_mask.insert({ element_ids[i], element_values[i] });
+          }
+
+          return true;
+
+      } catch (NcException& e) {
+          //std::cerr << "NetCDF error: " << e.what() << std::endl;
+          return false;
+      } catch (std::exception& e) {
+          //std::cerr << "Standard exception: " << e.what() << std::endl;
+          return false;
+      }
+  }
+
   bool completeFieldReader::readin_region_mask(const char* filename){
     std::ios_base::sync_with_stdio(false);
     std::ifstream input;
@@ -116,8 +248,8 @@ namespace GC{
   }
 
   completeFieldReader::completeFieldReader(const char* path, const char* field_name){
-    std::string filename = std::string(path) + std::string(field_name) + ".dat";
-    readin_field(filename.c_str());
+    std::string filename = std::string(path) + std::string(field_name) + ".nc";
+    readin_field_netcdf(filename.c_str());
     for (unsigned int i = 0;; ++i){
       std::string filename;
       std::ostringstream file_id;
@@ -128,8 +260,8 @@ namespace GC{
         break;
       }
     }
-    filename = std::string(path) + std::string(field_name) + "_mask.dat";
-    if (readin_region_mask(filename.c_str())){
+    filename = std::string(path) + std::string(field_name) + "_mask.nc";
+    if (readin_region_mask_netcdf(filename.c_str())){
       std::string filename = std::string(path) + std::string(field_name) + "_source_all.dat";
       std::ifstream input(filename);
       if(input){

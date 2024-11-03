@@ -18,16 +18,18 @@ endforeach()
 list(REMOVE_DUPLICATES GC_INCLUDE_DIRS)
 
 include_directories(${GC_INCLUDE_DIRS})
+include_directories(${netCDF_INCLUDE_DIR})
 include_directories("${pybind11_sources_SOURCE_DIR}/include")
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/synxflow/apps/cudaFloodSolversPybind)
+link_directories(${netCDF_LIB_DIR})
 
 cuda_add_library(${LIB} STATIC ${LIB_SRCS})
 add_dependencies(${LIB} lib cuda_lib)
 
 #set (CUDA_NVCC_FLAGS "-arch=sm_35")
 
-target_link_libraries(${LIB} lib cuda_lib)
+target_link_libraries(${LIB} netcdf netcdf-cxx4 lib cuda_lib)
 
 add_library(${EXE} MODULE ${SRCS})
 

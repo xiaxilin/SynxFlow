@@ -18,6 +18,7 @@ endforeach()
 list(REMOVE_DUPLICATES GC_INCLUDE_DIRS)
 
 include_directories(${GC_INCLUDE_DIRS})
+include_directories(${netCDF_INCLUDE_DIR})
 include_directories("${pybind11_sources_SOURCE_DIR}/include")
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/synxflow/apps/cudaDebrisFlowSolverPybind)

@@ -60,6 +60,7 @@ class build_ext(build_ext_orig):
             cmake_args += [
             '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + str(extdir.parent.parent.parent.absolute()),
             ]
+            cmake_args += ['-DCMAKE_VERBOSE_MAKEFILE=ON']
             build_args += ['--', '-j16']
 
         os.chdir(str(build_temp))
@@ -100,6 +101,7 @@ setup(
     ],
     install_requires=['numpy',
                       'scipy',
+                      'netCDF4',
                       'matplotlib',
                       'imageio',
                       'pandas',

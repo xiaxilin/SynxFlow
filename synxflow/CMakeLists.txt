@@ -19,6 +19,7 @@ message("NVCC Flags: " ${CUDA_NVCC_FLAGS})
 
 find_package(PythonInterp REQUIRED)
 find_package(PythonLibs REQUIRED)
+find_package(netCDF REQUIRED)
 
 include(FetchContent)
 
@@ -43,5 +44,5 @@ message("pybind11 : "${pybind11_sources_SOURCE_DIR})
 
 add_subdirectory(lib)
 add_subdirectory(apps/cudaFloodSolversPybind)
-add_subdirectory(apps/cudaDebrisFlowSolverPybind)
-add_subdirectory(apps/cudaLandslideSolverPybind)
+#add_subdirectory(apps/cudaDebrisFlowSolverPybind)
+#add_subdirectory(apps/cudaLandslideSolverPybind)

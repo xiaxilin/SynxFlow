@@ -18,9 +18,11 @@ endforeach()
 list(REMOVE_DUPLICATES GC_INCLUDE_DIRS)
 
 include_directories(${GC_INCLUDE_DIRS})
+include_directories(${netCDF_INCLUDE_DIR})
 include_directories("${pybind11_sources_SOURCE_DIR}/include")
 include_directories(${PYTHON_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR}/synxflow/apps/cudaLandslideSolverPybind)
+link_directories(${netCDF_LIB_DIR})
 
 cuda_add_library(${LIB} STATIC ${LIB_SRCS})
 add_dependencies(${LIB} lib cuda_lib)
@@ -32,6 +34,7 @@ target_link_libraries(${LIB} lib cuda_lib)
 add_library(${EXE} MODULE ${SRCS})
 
 target_link_libraries(${EXE} ${LIB})
+target_link_libraries(${EXE} netcdf-cxx4)
 target_link_libraries(${EXE} pybind11::module)
 
 set_target_properties(${EXE} PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}"

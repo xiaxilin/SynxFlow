@@ -46,6 +46,7 @@ import copy
 import warnings
 import numpy as np
 from datetime import datetime
+from netCDF4 import Dataset
 from .Raster import Raster
 from .Boundary import Boundary
 from .Rainfall import Rainfall
@@ -497,9 +498,9 @@ class InputModel:
             raise ValueError(file_tag+' is not a grid-based file')
         if is_single_gpu or self.num_of_sections == 1:
             # write as single GPU even the num of sections is more than one
-            self._write_grid_files(file_tag, is_multi_gpu=False)
+            self._write_grid_files_netcdf(file_tag, is_multi_gpu=False)
         else:
-            self._write_grid_files(file_tag, is_multi_gpu=True)
+            self._write_grid_files_netcdf(file_tag, is_multi_gpu=True)
         readme_filename = os.path.join(self._case_folder,'readme.txt')
         self.Summary.to_json(readme_filename)
         print(file_tag+' created')
@@ -926,6 +927,39 @@ class InputModel:
         """
         summary_obj = Summary(self)
         self.Summary = summary_obj
+
+    def _write_grid_files_netcdf(self, file_tag, is_multi_gpu=True):
+        """ Write input files consistent with the DEM grid in NetCDF format
+
+        Private function called by public function write_grid_files.
+        """
+        if is_multi_gpu is True:  # write for multi-GPU, use child object
+            vector_value_list = self._get_vector_value(file_tag, is_multi_gpu)
+            for obj_section in self.Sections:
+                vector_value = vector_value_list[obj_section.section_id]
+                cell_id = np.arange(vector_value.shape[0])
+                cells_vect = np.c_[cell_id, vector_value]
+                file_name = os.path.join(obj_section._data_folders['field'], file_tag + '.nc')
+
+                if file_tag == 'precipitation_mask':
+                    bounds_vect = None
+                else:
+                    bounds_vect = obj_section._get_boundary_id_code_array(file_tag)
+
+                # Call the updated function for writing NetCDF
+                indep_f._write_two_arrays_netcdf(file_name, cells_vect, bounds_vect)
+        else:  # single GPU, use global object
+            file_name = os.path.join(self._data_folders['field'],
+                                     file_tag+'.nc')
+            vector_value = self._get_vector_value(file_tag, is_multi_gpu=False)
+            cell_id = np.arange(vector_value.shape[0])
+            cells_vect = np.c_[cell_id, vector_value]
+            if file_tag == 'precipitation_mask':
+                bounds_vect = None
+            else:
+                bounds_vect = self._get_boundary_id_code_array(file_tag)
+            indep_f._write_two_arrays_netcdf(file_name, cells_vect, bounds_vect)
+        return None
 
     def _write_grid_files(self, file_tag, is_multi_gpu=True):
         """ Write input files consistent with the DEM grid

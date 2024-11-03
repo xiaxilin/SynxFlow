@@ -21,6 +21,7 @@ import os
 import shutil
 import scipy.signal
 import numpy as np
+from netCDF4 import Dataset
 from .rainfall_processing import _check_rainfall_rate_values
 
 def load_object(file_name):
@@ -149,6 +150,55 @@ def write_rain_source(rain_source, case_folder=None, num_of_sections=1):
             field_dir = case_folder+str(i)+'/input/field/'
             shutil.copy2(file_name, field_dir)
     print('precipitation_source_all.dat created')
+
+def _write_two_arrays_netcdf(file_name, id_values, bound_id_code=None):
+    """Write two arrays: cell_id-value pairs and bound_id-bound_code pairs in NetCDF format
+
+    Inputs:
+        file_name :  the full file name including path
+        id_values: valid cell ID - value pair (2D array)
+        bound_id_code: boundary cell ID - codes pair (2D array). If not given, only the id_values are written.
+    """
+    if not file_name.endswith('.nc'):
+        file_name = file_name + '.nc'
+
+    # Create a NetCDF file
+    with Dataset(file_name, 'w', format='NETCDF4') as nc_file:
+        # Dimensions
+        nc_file.createDimension('num_cells', id_values.shape[0])
+        cell_ids = nc_file.createVariable('cell_ids', np.int32, ('num_cells',))
+        cell_ids[:] = id_values[:, 0]
+
+        # Check if `id_values` has 1 or 2 columns
+        num_components = id_values.shape[1] - 1  # Subtract 1 for the ID column
+
+        if num_components == 1:
+            # Create a variable for a single component (scalar values)
+            cell_values = nc_file.createVariable('cell_values', np.float64, ('num_cells',))
+            cell_values[:] = id_values[:, 1]  # Assign the scalar values
+        elif num_components == 2:
+            # Create a dimension for the vector components (x, y)
+            nc_file.createDimension('xy_dim', num_components)
+            cell_values = nc_file.createVariable('cell_values', np.float64, ('num_cells', 'xy_dim'))
+            cell_values[:, :] = id_values[:, 1:]  # Assign the (x, y) values
+        else:
+            raise ValueError("id_values should have 2 or 3 columns (ID + 1 or 2 data columns).")
+
+        # Variables for boundary data (if provided)
+        if bound_id_code is not None:
+            nc_file.createDimension('num_boundaries', bound_id_code.shape[0])
+            nc_file.createDimension('code_dim', bound_id_code.shape[1] - 1)  # Subtract 1 for the boundary ID column
+
+            boundary_ids = nc_file.createVariable('boundary_ids', np.int32, ('num_boundaries',))
+            boundary_values = nc_file.createVariable('boundary_values', np.int32, ('num_boundaries', 'code_dim'))
+
+            # Assign data to boundary variables
+            boundary_ids[:] = bound_id_code[:, 0]
+            boundary_values[:, :] = bound_id_code[:, 1:]  # Assign the code values
+
+        # Metadata
+        nc_file.description = file_name
+        cell_values.units = 'unit_of_measurement'  # Replace with actual units if applicable
 
 def _write_two_arrays(file_name, id_values, bound_id_code=None):
     """Write two arrays: cell_id-value pairs and bound_id-bound_code pairs

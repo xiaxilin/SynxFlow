@@ -36,6 +36,7 @@ namespace GC{
     std::map<Flag, ShortTripleFlag> boundary_type;
   protected:
     virtual void readin_field(const char* filename);
+    virtual void readin_field_netcdf(const char* filename);
   };
 
   class completeFieldReader :public fieldReader{
@@ -50,6 +51,7 @@ namespace GC{
     virtual bool readin_boundary_source(const char* filename, const unsigned int cnt);
     virtual bool readin_data_source(const char* filename, const unsigned int cnt);
     virtual bool readin_region_mask(const char* filename);
+    virtual bool readin_region_mask_netcdf(const char* filename);
   };
 }
 
