@@ -28,8 +28,15 @@ cuda_add_library(${LIB} STATIC ${LIB_SRCS})
 add_dependencies(${LIB} lib cuda_lib)
 
 #set (CUDA_NVCC_FLAGS "-arch=sm_35")
+set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external)
+include_directories(${EXTERNAL_INSTALL_DIR}/include)
+link_directories(${EXTERNAL_INSTALL_DIR}/lib)
+link_directories(${netCDF_LIB_DIR})
 
-target_link_libraries(${LIB} netcdf netcdf-cxx4 lib cuda_lib)
+
+message(STATUS "External install directory: ${EXTERNAL_INSTALL_DIR}")
+
+target_link_libraries(${LIB} ${EXTERNAL_INSTALL_DIR}/lib/libnetcdf-cxx4.a netcdf lib cuda_lib)
 
 add_library(${EXE} MODULE ${SRCS})
 

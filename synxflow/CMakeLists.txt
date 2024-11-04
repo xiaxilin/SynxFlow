@@ -42,6 +42,8 @@ endif()
 
 message("pybind11 : "${pybind11_sources_SOURCE_DIR})
 
+include_directories(${netCDF_INCLUDE_DIR})
+
 add_subdirectory(lib)
 add_subdirectory(apps/cudaFloodSolversPybind)
 add_subdirectory(apps/cudaDebrisFlowSolverPybind)
