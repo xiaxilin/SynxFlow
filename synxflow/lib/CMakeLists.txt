@@ -4,6 +4,7 @@ include(ExternalProject)
 
 # Specify install directory for the external projects
 set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external)
+set(LIB_DIR ${EXTERNAL_INSTALL_DIR}/lib/static)
 
 get_filename_component(NETCDF_PARENT_DIR ${netCDF_INCLUDE_DIR} DIRECTORY)
 
@@ -17,7 +18,8 @@ ExternalProject_Add(netcdf-cxx4
                -DHDF5_INCLUDE_DIRS=${netCDF_INCLUDE_DIR}
                -DHDF5_LIBRARIES=${netCDF_LIB_DIR}/libhdf5.so
                -DCMAKE_C_FLAGS=-I${netCDF_INCLUDE_DIR}
-    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --verbose
+               -DCMAKE_INSTALL_LIBDIR=lib/static
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release --verbose -j16
     INSTALL_COMMAND ${CMAKE_COMMAND} --install . --prefix ${EXTERNAL_INSTALL_DIR}
     STEP_TARGETS build install
 )
@@ -34,14 +36,6 @@ list(REMOVE_DUPLICATES GC_INCLUDE_DIRS)
 # Gather source files
 file(GLOB_RECURSE gc_srcs "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc")
 file(GLOB_RECURSE gc_cuda_srcs "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu")
-
-if(EXISTS "${EXTERNAL_INSTALL_DIR}/lib64")
-    set(LIB_DIR "${EXTERNAL_INSTALL_DIR}/lib64")
-elseif(EXISTS "${EXTERNAL_INSTALL_DIR}/lib")
-    set(LIB_DIR "${EXTERNAL_INSTALL_DIR}/lib")
-else()
-    message(FATAL_ERROR "Neither lib nor lib64 directory found in ${EXTERNAL_INSTALL_DIR}")
-endif()
 
 message(STATUS "LIB DIR is ${LIB_DIR}")
 

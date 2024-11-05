@@ -33,13 +33,7 @@ add_dependencies(${LIB} lib cuda_lib)
 set(EXTERNAL_INSTALL_DIR ${CMAKE_BINARY_DIR}/external)
 include_directories(${EXTERNAL_INSTALL_DIR}/include)
 
-if(EXISTS "${EXTERNAL_INSTALL_DIR}/lib64")
-    set(LIB_DIR "${EXTERNAL_INSTALL_DIR}/lib64")
-elseif(EXISTS "${EXTERNAL_INSTALL_DIR}/lib")
-    set(LIB_DIR "${EXTERNAL_INSTALL_DIR}/lib")
-else()
-    message(FATAL_ERROR "Neither lib nor lib64 directory found in ${EXTERNAL_INSTALL_DIR}")
-endif()
+set(LIB_DIR ${EXTERNAL_INSTALL_DIR}/lib/static)
 
 link_directories(${LIB_DIR})
 link_directories(${netCDF_LIB_DIR})
@@ -48,8 +42,6 @@ link_directories(${netCDF_LIB_DIR})
 message(STATUS "External install directory: ${EXTERNAL_INSTALL_DIR}")
 
 target_link_libraries(${LIB} ${LIB_DIR}/libnetcdf-cxx4.a netcdf lib cuda_lib)
-
-target_link_libraries(${LIB} ${EXTERNAL_INSTALL_DIR}/lib/libnetcdf-cxx4.a netcdf lib cuda_lib)
 
 add_library(${EXE} MODULE ${SRCS})
 
