@@ -35,23 +35,33 @@ list(REMOVE_DUPLICATES GC_INCLUDE_DIRS)
 file(GLOB_RECURSE gc_srcs "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc")
 file(GLOB_RECURSE gc_cuda_srcs "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cu")
 
+if(EXISTS "${EXTERNAL_INSTALL_DIR}/lib64")
+    set(LIB_DIR "${EXTERNAL_INSTALL_DIR}/lib64")
+elseif(EXISTS "${EXTERNAL_INSTALL_DIR}/lib")
+    set(LIB_DIR "${EXTERNAL_INSTALL_DIR}/lib")
+else()
+    message(FATAL_ERROR "Neither lib nor lib64 directory found in ${EXTERNAL_INSTALL_DIR}")
+endif()
+
+message(STATUS "LIB DIR is ${LIB_DIR}")
+
 if (TARGET lib)
     message("lib is already defined")
 else()
     include_directories(${GC_INCLUDE_DIRS})
     include_directories(${EXTERNAL_INSTALL_DIR}/include)
 
-    link_directories(${EXTERNAL_INSTALL_DIR}/lib)
+    link_directories(${LIB_DIR})
     link_directories(${netCDF_LIB_DIR})
 
     # Add the main static library
     add_library(lib STATIC ${gc_srcs})
     add_dependencies(lib netcdf-cxx4)  # Ensure netCDF-CXX4 is built before linking
-    target_link_libraries(lib ${EXTERNAL_INSTALL_DIR}/lib/libnetcdf-cxx4.a netcdf)
+    target_link_libraries(lib ${LIB_DIR}/libnetcdf-cxx4.a netcdf)
 
     # Add CUDA static library
     cuda_add_library(cuda_lib STATIC ${gc_cuda_srcs})
     add_dependencies(cuda_lib netcdf-cxx4)  # Ensure netCDF-CXX4 is built before linking
-    target_link_libraries(cuda_lib ${EXTERNAL_INSTALL_DIR}/lib/libnetcdf-cxx4.a netcdf)
+    target_link_libraries(cuda_lib ${LIB_DIR}/libnetcdf-cxx4.a netcdf)
 
 endif()
