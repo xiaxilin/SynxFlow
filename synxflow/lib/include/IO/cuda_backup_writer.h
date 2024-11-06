@@ -114,16 +114,18 @@ namespace GC{
           }
           // Define variables based on data type
           NcVar elementIdsVar = dataFile.addVar("cell_ids", ncUint, numElementsDim);
+          elementIdsVar.setCompression(true, true, 4);
           elementIdsVar.putVar(cell_indices.data());
           if constexpr (std::is_same<T, Scalar>::value) {
               // Scalar data
               NcVar elementValuesVar = dataFile.addVar("cell_values", ncDouble, numElementsDim);
+              elementValuesVar.setCompression(true, true, 4);
               elementValuesVar.putVar(data_array);
           } else if constexpr (std::is_same<T, Vector2>::value) {
               // Vector2 data
               NcDim componentDim = dataFile.addDim("xy_dim", 2);
               NcVar elementValuesVar = dataFile.addVar("cell_values", ncDouble, {numElementsDim, componentDim});
-
+              elementValuesVar.setCompression(true, true, 4);
               // Create a 2D array to store the (x, y) components
               std::vector<std::vector<double>> vectorData(size, std::vector<double>(2));
               for (unsigned int i = 0; i < size; ++i) {
@@ -170,7 +172,8 @@ namespace GC{
           // Write boundary data to NetCDF file
           NcVar boundaryElementIdsVar = dataFile.addVar("boundary_ids", ncUint, numBoundariesDim);
           NcVar boundaryTypesVar = dataFile.addVar("boundary_values", ncInt, {numBoundariesDim, tripletDim});
-
+          boundaryElementIdsVar.setCompression(true, true, 4);
+          boundaryTypesVar.setCompression(true, true, 4);
           boundaryElementIdsVar.putVar(boundaryElementIds.data());
           boundaryTypesVar.putVar(flattenedBoundaryTypes.data());
 

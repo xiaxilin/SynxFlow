@@ -166,7 +166,7 @@ def _write_two_arrays_netcdf(file_name, id_values, bound_id_code=None):
     with Dataset(file_name, 'w', format='NETCDF4') as nc_file:
         # Dimensions
         nc_file.createDimension('num_cells', id_values.shape[0])
-        cell_ids = nc_file.createVariable('cell_ids', np.int32, ('num_cells',))
+        cell_ids = nc_file.createVariable('cell_ids', np.int32, ('num_cells',),zlib=True, complevel=4)
         cell_ids[:] = id_values[:, 0]
 
         # Check if `id_values` has 1 or 2 columns
@@ -174,12 +174,12 @@ def _write_two_arrays_netcdf(file_name, id_values, bound_id_code=None):
 
         if num_components == 1:
             # Create a variable for a single component (scalar values)
-            cell_values = nc_file.createVariable('cell_values', np.float64, ('num_cells',))
+            cell_values = nc_file.createVariable('cell_values', np.float64, ('num_cells',),zlib=True, complevel=4)
             cell_values[:] = id_values[:, 1]  # Assign the scalar values
         elif num_components == 2:
             # Create a dimension for the vector components (x, y)
             nc_file.createDimension('xy_dim', num_components)
-            cell_values = nc_file.createVariable('cell_values', np.float64, ('num_cells', 'xy_dim'))
+            cell_values = nc_file.createVariable('cell_values', np.float64, ('num_cells', 'xy_dim'),zlib=True, complevel=4)
             cell_values[:, :] = id_values[:, 1:]  # Assign the (x, y) values
         else:
             raise ValueError("id_values should have 2 or 3 columns (ID + 1 or 2 data columns).")
@@ -189,8 +189,8 @@ def _write_two_arrays_netcdf(file_name, id_values, bound_id_code=None):
             nc_file.createDimension('num_boundaries', bound_id_code.shape[0])
             nc_file.createDimension('code_dim', bound_id_code.shape[1] - 1)  # Subtract 1 for the boundary ID column
 
-            boundary_ids = nc_file.createVariable('boundary_ids', np.int32, ('num_boundaries',))
-            boundary_values = nc_file.createVariable('boundary_values', np.int32, ('num_boundaries', 'code_dim'))
+            boundary_ids = nc_file.createVariable('boundary_ids', np.int32, ('num_boundaries',),zlib=True, complevel=4)
+            boundary_values = nc_file.createVariable('boundary_values', np.int32, ('num_boundaries', 'code_dim'),zlib=True, complevel=4)
 
             # Assign data to boundary variables
             boundary_ids[:] = bound_id_code[:, 0]
