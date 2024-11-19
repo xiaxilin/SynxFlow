@@ -18,6 +18,7 @@
 */
 
 #include "cuda_gisascii_writer.h"
+#include <netcdf>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -103,7 +104,7 @@ namespace GC{
 
   }
   
-
+/*
   void cuGisAsciiWriter::write(cuFvMappedField<Scalar, on_cell>& phi, const char* filename, Scalar t, const char* directory){
 
 	  phi.data.sync();    
@@ -138,6 +139,57 @@ namespace GC{
     }
     fclose(output);
 
+  }
+*/
+
+  void cuGisAsciiWriter::write(cuFvMappedField<Scalar, on_cell>& phi, const char* filename, Scalar t, const char* directory) {
+      using namespace netCDF;
+
+      phi.data.sync();    
+      auto size = phi.data.size();
+      auto data_array = phi.data.host_ptr();
+
+      // Rearrange data according to indices
+      for (int i = 0; i < size; ++i) {
+          int index = indices[i];
+          data[index] = data_array[i];
+      }
+
+      // Create filename
+      std::ostringstream out_time;
+      out_time << t;
+      std::string name = std::string(directory) + std::string(filename) + "_" + out_time.str() + ".nc";
+
+      // Create a new NetCDF file
+      NcFile dataFile(name, NcFile::replace);
+
+      // Define dimensions
+      auto nRowsDim = dataFile.addDim("nrows", n_rows);
+      auto nColsDim = dataFile.addDim("ncols", n_cols);
+
+      // Define variables
+      auto dataVar = dataFile.addVar("data", ncDouble, {nRowsDim, nColsDim});
+      auto tVar = dataFile.addVar("time", ncDouble);
+      auto nodataVar = dataFile.addVar("nodata_value", ncDouble);
+
+      // Write attributes
+      dataVar.putAtt("cellsize", ncDouble, cell_size);
+      dataVar.putAtt("xllcorner", ncDouble, x_ori);
+      dataVar.putAtt("yllcorner", ncDouble, y_ori);
+
+      // Write data
+      std::vector<Scalar> rowMajorData(n_rows * n_cols);
+      for (int i = 0; i < n_rows; ++i) {
+          for (int j = 0; j < n_cols; ++j) {
+              rowMajorData[i * n_cols + j] = data[i * n_cols + j];
+          }
+      }
+      dataVar.setCompression(true, true, 4);
+      dataVar.putVar(rowMajorData.data());
+
+      // Write time and nodata value
+      tVar.putVar(&t);
+      nodataVar.putVar(&nodata_value);
   }
 
 

@@ -75,7 +75,7 @@ namespace GC{
                   return;
               }
 
-              data.insert({ cell_ids[i], value });
+              data.push_back({ cell_ids[i], value });
           }
 
           // Check and read boundary data if it exists
@@ -101,7 +101,7 @@ namespace GC{
                   int primary_type = boundary_values[i * 3];
                   int secondary_type = boundary_values[i * 3 + 1];
                   int source_id = boundary_values[i * 3 + 2];
-                  boundary_type.insert({ boundary_ids[i], ShortTripleFlag(primary_type, secondary_type, source_id) });
+                  boundary_type.push_back({ boundary_ids[i], ShortTripleFlag(primary_type, secondary_type, source_id) });
               }
 
           }
@@ -142,7 +142,7 @@ namespace GC{
       stream.str(line);
       value = 0.0;
       stream >> id_element >> value;
-      data.insert({ id_element, value });
+      data.push_back({ id_element, value });
       stream.str(std::string());
       stream.clear();		//clear the istringstream
     }
@@ -162,7 +162,7 @@ namespace GC{
       secondary_type = 0;
       source_id = 0;
       stream >> id_boundary >> primary_type >> secondary_type >>source_id;
-      boundary_type.insert({ id_boundary, ShortTripleFlag(primary_type, secondary_type, source_id) });
+      boundary_type.push_back({ id_boundary, ShortTripleFlag(primary_type, secondary_type, source_id) });
       stream.str(std::string());
       stream.clear();		//clear the istringstream
     }
@@ -201,7 +201,7 @@ namespace GC{
 
           // Insert data into the region_mask map
           for (size_t i = 0; i < n_elements; i++) {
-              region_mask.insert({ element_ids[i], element_values[i] });
+              region_mask.push_back({ element_ids[i], element_values[i] });
           }
 
           return true;
@@ -241,7 +241,7 @@ namespace GC{
       stream.str(line);
       value = 0;
       stream >> id_element >> value;
-      region_mask.insert({ id_element, value });
+      region_mask.push_back({ id_element, value });
       stream.str(std::string());
       stream.clear();		//clear the istringstream
     }
