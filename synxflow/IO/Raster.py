@@ -72,6 +72,8 @@ class Raster(object):
         if type(source_file) is str: # tif, txt, asc, or gz file
             if source_file.endswith('.tif'): # only read the first band
                 array, header, crs = sp.tif_read(source_file)
+            elif source_file.endswith('.nc'):
+                array, header, crs = sp.ncgridread(source_file)
             else:
                 array, header, crs = sp.arcgridread(source_file,
                                                     num_header_rows)                
