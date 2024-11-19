@@ -19,6 +19,7 @@
 
 #include <map>
 #include <vector>
+#include <utility>
 #include "Flag.h"
 #include "Scalar.h"
 #include "Vector.h"
@@ -32,8 +33,10 @@ namespace GC{
   public:
     fieldReader() = default;
     fieldReader(const char* filename);
-    std::map<Flag, Vector3> data;
-    std::map<Flag, ShortTripleFlag> boundary_type;
+    //std::map<Flag, Vector3> data;
+    //std::map<Flag, ShortTripleFlag> boundary_type;
+    std::vector<std::pair<Flag, Vector3>> data;
+    std::vector<std::pair<Flag, ShortTripleFlag>> boundary_type;
   protected:
     virtual void readin_field(const char* filename);
     virtual void readin_field_netcdf(const char* filename);
@@ -45,7 +48,8 @@ namespace GC{
     std::vector< std::vector<Vector3> > boundary_source;
     std::vector< std::vector<Scalar> > data_time_series;
     std::vector< std::vector<Vector3> > data_source;
-    std::map<Flag, Flag> region_mask;
+    //std::map<Flag, Flag> region_mask;
+    std::vector<std::pair<Flag, Flag>> region_mask;
     completeFieldReader(const char* path, const char* field_name);
   protected:
     virtual bool readin_boundary_source(const char* filename, const unsigned int cnt);

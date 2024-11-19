@@ -32,6 +32,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 from matplotlib.colors import LightSource
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from netCDF4 import Dataset
 #%%
 def arc_header_read(file_name, header_rows=6):
     """ read the header of a asc file as a dictionary
@@ -111,6 +112,55 @@ def arcgridread(file_name, header_rows=6, return_nan=True):
             wkt = file.read()
     else:
         wkt = None
+    return array, header, wkt
+
+def ncgridread(file_name, return_nan=True):
+    """
+    Reads a NetCDF file and extracts metadata and data.
+
+    Parameters:
+        file_path (str): Path to the NetCDF file.
+
+    Returns:
+        dict: A dictionary containing the data and metadata.
+    """
+    # Open the NetCDF file
+    check_file_existence(file_name)
+    with Dataset(file_name, mode='r') as nc_file:
+        # Extract dimensions
+        nrows = nc_file.dimensions['nrows'].size
+        ncols = nc_file.dimensions['ncols'].size
+
+        # Extract variables
+        array = nc_file.variables['data'][:]
+        time = nc_file.variables['time'][:]
+        nodata_value = nc_file.variables['nodata_value'][:]
+
+        # Extract attributes
+        cellsize = nc_file.variables['data'].cellsize
+        xllcorner = nc_file.variables['data'].xllcorner
+        yllcorner = nc_file.variables['data'].yllcorner
+
+    # Construct the header dictionary
+    header = {
+        'ncols': ncols,
+        'nrows': nrows,
+        'xllcorner': float(xllcorner),
+        'yllcorner': float(yllcorner),
+        'cellsize': float(cellsize),
+        'NODATA_value': float(nodata_value)
+    }
+
+    if return_nan:
+        if 'NODATA_value' in header:
+            array[array == header['NODATA_value']] = np.nan
+    prj_file = file_name[:-4]+'.prj'
+    if os.path.isfile(prj_file):
+        with open(prj_file, 'r') as file:
+            wkt = file.read()
+    else:
+        wkt = None
+
     return array, header, wkt
 
 def arcgridwrite(file_name, array, header, compression=False):

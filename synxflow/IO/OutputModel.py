@@ -137,20 +137,25 @@ class OutputModel:
         self.gauges_pos = gauges_pos
         return gauges_pos, times, values
     
-    def read_grid_file(self, file_tag='h_0', compressed=False):
+    def read_grid_file(self, file_tag='h_0', grid_type='netCDF'):
         """Read asc grid files from output
 
         Return:
             Raster: a raster object of the grid
 
         """
-        if not file_tag.endswith('.asc'):
-            file_tag = file_tag+'.asc'
-        if compressed:
+        if grid_type == 'netCDF':
+            file_tag = file_tag+'.nc'
+        elif grid_type == 'compressed':
             file_tag = file_tag+'.gz'
+        elif grid_type == 'asc':
+            file_tag = file_tag+'.asc'
         if self.num_of_sections==1:
             file_name = os.path.join(self.output_folder, file_tag)
-            grid_array, _, _ = sp.arcgridread(file_name)
+            if file_name.lower().endswith('.nc'):
+                grid_array, _, _ = sp.ncgridread(file_name)
+            else:
+                grid_array, _, _ = sp.arcgridread(file_name)
         else: # multi-GPU
             grid_array = self._combine_multi_gpu_grid_data(file_tag)
         grid_obj = Raster(array=grid_array, header=self.header)
@@ -239,7 +244,10 @@ class OutputModel:
         for header0, folder0 in zip(header_list, output_folder):
             ind_top, ind_bottom = _header2row_numbers(header0, header_global)
             file_name = os.path.join(folder0, asc_file_name)
-            array_local, _, _ = sp.arcgridread(file_name)
+            if file_name.lower().endswith('.nc'):
+                array_local, _, _ = sp.ncgridread(file_name)
+            else:
+                array_local, _, _ = sp.arcgridread(file_name)
             array_global[ind_top:ind_bottom+1,:] = array_local
         return array_global
     
